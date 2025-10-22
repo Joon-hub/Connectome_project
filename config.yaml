@@ -11,7 +11,7 @@ data:
 # Model parameters
 model:
   n_jobs: -1
-  type: "logistic_regrission"
+  type: "logistic_regression"
   params:
     solver: "lbfgs"
     penalty: "l2"
