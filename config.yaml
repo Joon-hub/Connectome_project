@@ -1,0 +1,40 @@
+# configuration file for brain connectivity pipeline
+
+# Data paths 
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  results_dir: "data/results"
+  piop2_file: "PIOP2_restingstate.csv"
+  piop1_file: "PIOP1_gstroop.csv"
+
+# Model parameters
+model:
+  n_jobs: -1
+  type: "logistic_regrission"
+  params:
+    solver: "lbfgs"
+    penalty: "l2"
+    max_iter: 1000
+    C: 0.01
+    random_state: 21
+
+# Cross validation parameters
+cross_validation:
+  type: "kfold"
+  n_splits: 5
+  shuffle: true
+  random_state: 42
+
+# Thresholds
+thresholds:
+  high_error: 0.3
+  low_error: 0.1
+
+# Visualization
+visualization:
+  dpi: 300
+  figure_format: "png"
+  color_scheme: "RdYlGn_r"
+  piop1_input_pattern: data/results/error_map_piop1_fold*.csv
+  piop2_input_pattern: data/results/error_map_piop2_fold*.csv

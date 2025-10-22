@@ -1,0 +1,21 @@
+# HTCondor submit file for brain connectivity pipeline (5-fold CV)
+
+universe   = vanilla
+executable = run_pipeline.sh
+arguments  = $(fold)
+
+getenv     = True
+initialdir = /home/sjoon/projects/Connectome_project
+
+log    = logs/fold_$(fold).log
+output = logs/fold_$(fold).out
+error  = logs/fold_$(fold).err
+
+request_cpus   = 4
+request_memory = 2GB
+request_disk   = 1GB
+
+should_transfer_files   = IF_NEEDED
+when_to_transfer_output = ON_EXIT
+
+queue fold in 1,2,3,4,5

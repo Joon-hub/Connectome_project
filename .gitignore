@@ -1,0 +1,7 @@
+# ignore directories
+data/
+logs/
+.ipynb_checkpoints/
+.vscode/
+brain_connectivity_pipeline.egg-info/
+venv/
