@@ -164,4 +164,3 @@ class ConnectivityProcessor:
         pd.DataFrame(connection_columns, columns=["connection_name"]).to_csv(filepath, index=False)
         print(f"Saved {len(connection_columns)} connection columns to {filepath}")
         
-        

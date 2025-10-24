@@ -5,6 +5,9 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import accuracy_score
 from typing import Tuple
 import pickle
+from sklearn.model_selection import GroupKFold
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
 
 class BrainRegionClassifier:
     '''Train and apply brain region classifier'''
@@ -37,47 +40,34 @@ class BrainRegionClassifier:
         print(f"Training accuracy: {accuracy:.4f}")
         return accuracy
     
+
+
     def cross_validate(self, X: np.ndarray, y: np.ndarray, subjects: np.ndarray) -> dict:
-        '''Perform subject-wise cross-validation'''
-        print("\\nPerforming cross-validation...")
-        
-        cv_config = self.config.get('cross_validation')
-        unique_subjects = np.unique(subjects)
-        
-        kf = StratifiedKFold(
-            n_splits=cv_config['n_splits'],
-            shuffle=cv_config['shuffle'],
-            random_state=cv_config['random_state']
-        )
-        
+        print("\nPerforming cross-validation (group-wise by subject)...")
+
+        # Create the group sampler: each unique subject is a group
+        grp = GroupKFold(n_splits=self.config.get('cross_validation', 'n_splits'),
+                        shuffle=self.config.get('cross_validation', 'shuffle'),
+                        random_state=self.config.get('cross_validation', 'random_state'))
+
         fold_accuracies = []
-        
-        for fold, (train_idx, val_idx) in enumerate(kf.split(unique_subjects, np.zeros(len(unique_subjects))), 1):
-            train_subjects = unique_subjects[train_idx]
-            val_subjects = unique_subjects[val_idx]
-            
-            train_mask = np.isin(subjects, train_subjects)
-            val_mask = np.isin(subjects, val_subjects)
-            
-            X_train, X_val = X[train_mask], X[val_mask]
-            y_train, y_val = y[train_mask], y[val_mask]
-            
-            # Scale
+        for fold, (train_idx, val_idx) in enumerate(grp.split(X, y, groups=subjects), start=1):
+            print(f"\nFold {fold} —")
+            X_train, X_val = X[train_idx], X[val_idx]
+            y_train, y_val = y[train_idx], y[val_idx]
+
+            # scale and train model
             scaler = StandardScaler()
-            X_train_scaled = scaler.fit_transform(X_train)
-            X_val_scaled = scaler.transform(X_val)
-            
-            # Train
+            X_train_s = scaler.fit_transform(X_train)
+            X_val_s = scaler.transform(X_val)
+
             model = LogisticRegression(**self.config.get('model', 'params'))
-            model.fit(X_train_scaled, y_train)
-            
-            # Evaluate
-            y_pred = model.predict(X_val_scaled)
+            model.fit(X_train_s, y_train)
+            y_pred = model.predict(X_val_s)
             acc = accuracy_score(y_val, y_pred)
+            print(f"  Accuracy: {acc:.4f}")
             fold_accuracies.append(acc)
-            
-            print(f"Fold {fold}: {acc:.4f}")
-        
+
         return {
             'fold_accuracies': fold_accuracies,
             'mean_accuracy': np.mean(fold_accuracies),
