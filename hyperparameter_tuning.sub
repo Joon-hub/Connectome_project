@@ -1,0 +1,25 @@
+# HTCondor submit file for hyperparameter tuning
+# This will run 30 jobs (5 C values × 2 solvers × 3 max_iter values)
+
+universe   = vanilla
+executable = run_hyperparameter_tuning.sh
+arguments  = $(job_id)
+
+getenv     = True
+initialdir = /home/sjoon/projects/Connectome_project
+
+log    = logs/tuning/job_$(job_id).log
+output = logs/tuning/job_$(job_id).out
+error  = logs/tuning/job_$(job_id).err
+
+request_cpus   = 4
+request_memory = 4GB
+request_disk   = 2GB
+
+should_transfer_files   = IF_NEEDED
+when_to_transfer_output = ON_EXIT
+
+# Queue 30 jobs for hyperparameter grid search
+# Grid: C=[0.001, 0.01, 0.1, 1.0, 10.0] × solver=[lbfgs, saga] × max_iter=[500, 1000, 2000]
+# Total combinations: 5 × 2 × 3 = 30
+queue job_id from seq 0 29 |

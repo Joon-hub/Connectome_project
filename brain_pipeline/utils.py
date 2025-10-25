@@ -20,5 +20,5 @@ def print_results(results: Dict):
         else:
             print(f"{key}: {value}")
             
-            
+
             

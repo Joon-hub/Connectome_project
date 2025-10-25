@@ -5,3 +5,4 @@ logs/
 .vscode/
 brain_connectivity_pipeline.egg-info/
 venv/
+Notes/
