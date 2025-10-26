@@ -38,7 +38,6 @@ def main(fold: int = 1):
         processor.save_connection_columns(connection_columns, conn_file)
     
     
-    
     # 2. Extract brain regions   
     print(" \n [2/5] Extracting brain regions from connection data...")
     region_list, _, _ = processor.extract_regions(connection_columns)
@@ -54,6 +53,14 @@ def main(fold: int = 1):
     # 3. Create dataset
     print(" \n [3/5] Creating dataset for model training...")
     X_train, y_train , subjects = processor.create_dataset(df_piop2, connection_columns)
+    
+    # save X_train, y_train, subject in a single csv file
+    data_file = Path(f"data/processed/clean_data.csv")
+    df = pd.DataFrame(X_train, columns=region_list["Region"])
+    df["label"] = y_train
+    df["subject"] = subjects
+    df.to_csv(data_file, index=False)
+    print(f" Saved training data to {data_file}")
     
     # 4. Train model with cross-validation
     print(" \n [4/5] Training model with cross-validation...")

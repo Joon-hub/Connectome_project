@@ -28,4 +28,4 @@ def run_pipeline():
     print("\n[3/3] Creating visualizations...")
     visualize_results.main()
 
-    print("\n✅ Pipeline complete!")
+    print("\n Pipeline complete!")
