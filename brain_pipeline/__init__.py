@@ -12,5 +12,6 @@ __all__ = [
     'ConnectivityProcessor',
     'BrainRegionClassifier',
     'ModelEvaluator',
-    'Visualizer'
+    'Visualizer',
+    'nilearn_visualizer'
 ]

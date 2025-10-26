@@ -1,12 +1,54 @@
 #!/bin/bash
-# Activate your virtual environment
+# Bash script to run the brain connectivity pipeline with a specific fold
+# This is called by HTCondor with fold number as argument
+
+# Get the fold number from command line argument (NO SPACES around =)
+FOLD=$1
+
+# Check if fold argument was provided
+if [ -z "$FOLD" ]; then
+    echo "ERROR: No fold number provided!"
+    echo "Usage: $0 <fold_number>"
+    exit 1
+fi
+
+echo "=========================================="
+echo "Starting Brain Connectivity Pipeline"
+echo "Fold: $FOLD"
+echo "Time: $(date)"
+echo "Working directory: $(pwd)"
+echo "=========================================="
+
+# Activate virtual environment
 source venv/bin/activate
 
-# Move into project directory
-cd "$(dirname "$0")"
+# Check if activation worked
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to activate virtual environment"
+    exit 1
+fi
 
-# Default fold to 1 if not provided 
-fold=${1:-1}
+# Create necessary directories if they don't exist
+mkdir -p data/raw
+mkdir -p data/processed  
+mkdir -p data/results
+mkdir -p logs
 
-# Run pipeline script
-python scripts/run_full_pipeline.py --fold "$fold"
+# Show Python version for debugging
+echo "Python version: $(python --version)"
+echo "Python path: $(which python)"
+
+# Run the pipeline with the specified fold
+echo "Running: python scripts/run_full_pipeline.py --fold $FOLD"
+python scripts/run_full_pipeline.py --fold $FOLD
+
+# Capture the exit code
+EXIT_CODE=$?
+
+echo "=========================================="
+echo "Pipeline completed with exit code: $EXIT_CODE"
+echo "Time: $(date)"
+echo "=========================================="
+
+# Return the exit code
+exit $EXIT_CODE
