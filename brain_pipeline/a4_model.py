@@ -1,7 +1,6 @@
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import accuracy_score
 from typing import Tuple
 import pickle

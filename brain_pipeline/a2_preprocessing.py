@@ -8,12 +8,14 @@ from multiprocessing import Value
 import numpy as np
 import pandas as pd
 from typing import Tuple, Dict, List
+from brain_pipeline.a3_diagonal import impute_connectivity_diagonal
 
 
 class ConnectivityProcessor:
     """Process connectivity data and extract brain regions."""
 
     def __init__(self):
+        self.config = config
         self.region_list: List[str] = []
         self.region_to_idx: Dict[str, int] = {}
         self.n_regions: int = 0
@@ -92,61 +94,47 @@ class ConnectivityProcessor:
 
         return matrix
     
-    def create_dataset(self, df: pd.DataFrame, connection_columns: List[str]) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Create dataset of connectivity matrices and labels from DataFrame.
-        
-        Args:
-            df: DataFrame where first column is subject ID, rest are connectivity values
-            connection_columns: List of connection column names in format "Region1~Region2"
-            
-        Returns:
-            X: Feature array of shape (n_samples, n_features) where n_samples = n_subjects * n_regions
-            y: Label array of region indices
-            subjects: Subject ID array
-        """
-        
+    def create_dataset(self, df: pd.DataFrame, connection_columns: List[str], diagonal_strategy: str = "one") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Create dataset of connectivity matrices and labels from DataFrame, with optional diagonal imputation."""
+
         if self.n_regions == 0:
             raise ValueError("Regions have not been extracted. Run extract_regions() first.")
         
         if df.shape[0] == 0:
             raise ValueError("Input DataFrame is empty.")
-        
-        # Validate: DataFrame should have 1 ID column + connection columns
+
         expected_cols = len(connection_columns) + 1
         if df.shape[1] != expected_cols:
             raise ValueError(
-                f"Dimension mismatch: DataFrame has {df.shape[1]} columns, "
-                f"expected {expected_cols} (1 subject ID + {len(connection_columns)} connections)."
+                f"Dimension mismatch: DataFrame has {df.shape[1]} columns, expected {expected_cols}."
             )
         
         X_list, y_list, subject_list = [], [], []
-        
+
         for i in range(df.shape[0]):
-            subject_id = df.iloc[i, 0]  # First column is subject ID
-            connectivity_values = df.iloc[i, 1:].to_numpy(dtype=float)  # Rest are connectivity values
+            subject_id = df.iloc[i, 0]
+            connectivity_values = df.iloc[i, 1:].to_numpy(dtype=float)
             
-            # Reconstruct connectivity matrix
+            # Step 1: reconstruct matrix
             matrix = self.reconstruct_matrix(connectivity_values, connection_columns)
             
-            # For each region, extract its connectivity profile (excluding self-connection)
+            # Step 2: Impute diagonal
+            matrix = impute_connectivity_diagonal(matrix, self.config)
+            
+            # Step 3: flatten rows for each region
             for region_idx in range(self.n_regions):
-                # Extract row for this region and remove diagonal element
-                connectivity_pattern = np.delete(matrix[region_idx, :], region_idx)
-                
-                # FIXED: Append inside the loop
-                X_list.append(connectivity_pattern)
+                X_list.append(matrix[region_idx, :])
                 y_list.append(region_idx)
                 subject_list.append(subject_id)
-        
-        # Convert lists to numpy arrays
+
         X = np.array(X_list)
         y = np.array(y_list)
         subjects = np.array(subject_list)
-        
-        print(f"Created dataset with {X.shape[0]} samples ({df.shape[0]} subjects × {self.n_regions} regions) "
-              f"and {X.shape[1]} features per sample.")
-        
+
+        print(f"Created dataset with {X.shape[0]} samples ({df.shape[0]} subjects × {self.n_regions} regions)")
+        print(f"Diagonal strategy used: {diagonal_strategy}")
         return X, y, subjects
+
     
     def save_region_list(self, filepath: str) -> None:
         """Save the extracted region list to a CSV file."""

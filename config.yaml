@@ -8,6 +8,14 @@ data:
   piop2_file: "PIOP2_restingstate.csv"
   piop1_file: "PIOP1_gstroop.csv"
 
+# Preprocessing parameters
+preprocessing:
+  n_jobs: -1
+  diagonal_imputation_settings:
+    strategy: "random" # zero, random, mean, one, or knn
+    knn_neighbors: 3
+    random_seed: 42
+
 # Model parameters
 model:
   n_jobs: -1

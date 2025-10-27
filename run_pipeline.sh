@@ -39,8 +39,8 @@ echo "Python version: $(python --version)"
 echo "Python path: $(which python)"
 
 # Run the pipeline with the specified fold
-echo "Running: python scripts/run_full_pipeline.py --fold $FOLD"
-python scripts/run_full_pipeline.py --fold $FOLD
+echo "Running: python scripts/a4_run_full_pipeline.py --fold $FOLD"
+python scripts/a4_run_full_pipeline.py --fold $FOLD
 
 # Capture the exit code
 EXIT_CODE=$?

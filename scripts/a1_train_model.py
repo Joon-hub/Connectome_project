@@ -35,7 +35,7 @@ def main(fold: int = 1):
     
     # Initialize components
     data_loader = DataLoader(config)
-    processor = ConnectivityProcessor()
+    processor = ConnectivityProcessor(config)
     
     # ============================================
     # STEP 1: Load the data

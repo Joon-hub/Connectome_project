@@ -62,8 +62,8 @@ def main():
         print_section("STEP 1/3: TRAINING MODEL", width=80)
         
         # Import here to avoid issues if file doesn't exist
-        import scripts.train_model as train_model
-        result = train_model.main(fold=fold)
+        import scripts.a1_train_model as a1_train_model
+        result = a1_train_model.main(fold=fold)
         
         if result != 0:
             print("❌ Error in training step!")
@@ -76,9 +76,9 @@ def main():
         # ============================================
         print_section("STEP 2/3: APPLYING TO TASK DATA", width=80)
         
-        import scripts.apply_to_task as apply_to_task
+        import scripts.a2_apply_to_task as a2_apply_to_task
         try:
-            apply_to_task.main(fold=fold)
+            a2_apply_to_task.main(fold=fold)
             print("✅ Task application completed successfully!\n")
         except Exception as e:
             print(f"❌ Error applying to task data: {e}")
@@ -90,9 +90,9 @@ def main():
         # ============================================
         print_section("STEP 3/3: CREATING VISUALIZATIONS", width=80)
         
-        import scripts.visualize_results as visualize_results
+        import scripts.a3_visualize_results as a3_visualize_results
         try:
-            visualize_results.main()
+            a3_visualize_results.main()
             print("✅ Visualizations created successfully!\n")
         except Exception as e:
             print(f"⚠️  Warning in visualization: {e}")

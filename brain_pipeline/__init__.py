@@ -1,9 +1,9 @@
-from .config import Config
-from .data_loader import DataLoader
-from .preprocessing import ConnectivityProcessor
-from .model import BrainRegionClassifier
-from .evaluation import ModelEvaluator
-from .visualization import Visualizer
+from .a0_config import Config
+from .a1_data_loader import DataLoader
+from .a2_preprocessing import ConnectivityProcessor
+from .a4_model import BrainRegionClassifier
+from .a5_evaluation import ModelEvaluator
+from .a6_visualization import Visualizer
 
 __version__ = '0.1.0'
 __all__ = [
