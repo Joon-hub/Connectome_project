@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 import pandas as pd
 import numpy as np
+import logging
 
 # Add parent directory to path so we can import our modules
 sys.path.append(str(Path(__file__).parent.parent))

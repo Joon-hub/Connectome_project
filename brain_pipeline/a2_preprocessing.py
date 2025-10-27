@@ -4,7 +4,6 @@ Includes extraction of brain regions from connection columns,
 reconstruction of connectivity matrices, and dataset creation.
 """
 
-from multiprocessing import Value
 import numpy as np
 import pandas as pd
 from typing import Tuple, Dict, List
@@ -14,7 +13,7 @@ from brain_pipeline.a3_diagonal import impute_connectivity_diagonal
 class ConnectivityProcessor:
     """Process connectivity data and extract brain regions."""
 
-    def __init__(self):
+    def __init__(self,config):
         self.config = config
         self.region_list: List[str] = []
         self.region_to_idx: Dict[str, int] = {}
@@ -119,7 +118,7 @@ class ConnectivityProcessor:
             matrix = self.reconstruct_matrix(connectivity_values, connection_columns)
             
             # Step 2: Impute diagonal
-            matrix = impute_connectivity_diagonal(matrix, self.config)
+            matrix = impute_connectivity_diagonal(matrix)
             
             # Step 3: flatten rows for each region
             for region_idx in range(self.n_regions):
@@ -134,7 +133,6 @@ class ConnectivityProcessor:
         print(f"Created dataset with {X.shape[0]} samples ({df.shape[0]} subjects × {self.n_regions} regions)")
         print(f"Diagonal strategy used: {diagonal_strategy}")
         return X, y, subjects
-
     
     def save_region_list(self, filepath: str) -> None:
         """Save the extracted region list to a CSV file."""

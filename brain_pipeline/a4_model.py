@@ -24,7 +24,7 @@ class BrainRegionClassifier:
     
     def train(self, X: np.ndarray, y: np.ndarray) -> float:
         '''Train model on full dataset'''
-        print("\\nTraining model...")
+        print("\nTraining model...")
         
         # Scale features
         X_scaled = self.scaler.fit_transform(X)
@@ -39,15 +39,11 @@ class BrainRegionClassifier:
         print(f"Training accuracy: {accuracy:.4f}")
         return accuracy
     
-
-
     def cross_validate(self, X: np.ndarray, y: np.ndarray, subjects: np.ndarray) -> dict:
         print("\nPerforming cross-validation (group-wise by subject)...")
 
         # Create the group sampler: each unique subject is a group
-        grp = GroupKFold(n_splits=self.config.get('cross_validation', 'n_splits'),
-                        shuffle=self.config.get('cross_validation', 'shuffle'),
-                        random_state=self.config.get('cross_validation', 'random_state'))
+        grp = GroupKFold(n_splits=self.config.get('cross_validation', 'n_splits'))
 
         fold_accuracies = []
         for fold, (train_idx, val_idx) in enumerate(grp.split(X, y, groups=subjects), start=1):
