@@ -1,4 +1,5 @@
-# configuration file for brain connectivity pipeline
+# Enhanced Configuration for Brain Connectivity Pipeline
+# ======================================================
 
 # Data paths 
 data:
@@ -11,10 +12,43 @@ data:
 # Preprocessing parameters
 preprocessing:
   n_jobs: -1
+  
+  # ============================================================
+  # DIAGONAL IMPUTATION SETTINGS
+  # ============================================================
   diagonal_imputation_settings:
-    strategy: "knn" # zero, random, mean, one, or knn
+    # Strategy options:
+    # Basic strategies:
+    #   - "zero": Set diagonal to 0
+    #   - "one": Set diagonal to 1 (perfect self-correlation)
+    #   - "mean": Row-wise mean of off-diagonal elements
+    #   - "random": Random values from uniform[-1, 1]
+    #   - "knn": K-nearest neighbors imputation
+    #
+    # Advanced strategies (require region_list):
+    #   - "network_mean": Mean connectivity within same functional network
+    #   - "spatial_mean": Mean connectivity to spatially neighboring regions
+    #   - "hybrid": Weighted combination of network + spatial
+    #   - "network_spatial_intersection": Regions that are BOTH same network AND spatially close
+    
+    strategy: "network_mean"  # Default strategy to use
+    
+    # KNN-specific settings
     knn_neighbors: 3
+    
+    # Random-specific settings
     random_seed: 42
+    
+    # Network-specific settings
+    network_resolution: "17"  # "7" or "17" for Schaefer networks
+    
+    # Spatial-specific settings
+    spatial_radius_mm: 20.0  # Radius in millimeters for spatial neighborhoods
+    
+    # Hybrid-specific settings (must sum to 1.0)
+    hybrid_weights:
+      network: 0.6  # Weight for network-based component
+      spatial: 0.4  # Weight for spatial component
 
 # Model parameters
 model:
@@ -46,3 +80,18 @@ visualization:
   color_scheme: "RdYlGn_r"
   piop1_input_pattern: data/results/error_map_piop1_fold*.csv
   piop2_input_pattern: data/results/error_map_piop2_fold*.csv
+
+# Experimental settings for diagonal imputation comparison
+# =========================================================
+# Use this section to compare different imputation strategies
+diagonal_comparison:
+  enabled: false  # Set to true to run comparison across all strategies
+  strategies_to_compare:
+    - "zero"
+    - "one"
+    - "mean"
+    - "knn"
+    - "network_mean"
+    - "spatial_mean"
+    - "hybrid"
+  output_dir: "data/results/diagonal_comparison"

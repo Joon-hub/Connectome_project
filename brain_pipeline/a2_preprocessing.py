@@ -1,19 +1,27 @@
 """
-Module for preprocessing brain connectivity data.
+Enhanced Preprocessing Module for Brain Connectivity Data
+==========================================================
 Includes extraction of brain regions from connection columns,
-reconstruction of connectivity matrices, and dataset creation.
+reconstruction of connectivity matrices, and dataset creation
+with advanced diagonal imputation.
 """
 
 import numpy as np
 import pandas as pd
 from typing import Tuple, Dict, List
-from brain_pipeline.a3_diagonal import impute_connectivity_diagonal
+import sys
+from pathlib import Path
+
+# Import the enhanced diagonal imputation module
+# Adjust path as needed based on your project structure
+sys.path.append(str(Path(__file__).parent))
+from brain_pipeline_a3_diagonal_enhanced import impute_connectivity_diagonal
 
 
 class ConnectivityProcessor:
     """Process connectivity data and extract brain regions."""
 
-    def __init__(self,config):
+    def __init__(self, config):
         self.config = config
         self.region_list: List[str] = []
         self.region_to_idx: Dict[str, int] = {}
@@ -93,8 +101,14 @@ class ConnectivityProcessor:
 
         return matrix
     
-    def create_dataset(self, df: pd.DataFrame, connection_columns: List[str], diagonal_strategy: str = "one") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Create dataset of connectivity matrices and labels from DataFrame, with optional diagonal imputation."""
+    def create_dataset(self, df: pd.DataFrame, connection_columns: List[str]) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Create dataset of connectivity matrices and labels from DataFrame,
+        with enhanced diagonal imputation that considers network structure.
+        
+        Key enhancement: Passes region_list to diagonal imputation to enable
+        network-aware and spatially-aware strategies.
+        """
 
         if self.n_regions == 0:
             raise ValueError("Regions have not been extracted. Run extract_regions() first.")
@@ -108,19 +122,36 @@ class ConnectivityProcessor:
                 f"Dimension mismatch: DataFrame has {df.shape[1]} columns, expected {expected_cols}."
             )
         
+        # Get imputation strategy from config
+        settings = (
+            self.config.get('preprocessing', {})
+            .get('diagonal_imputation_settings', {})
+        )
+        strategy = settings.get('strategy', 'mean')
+        
+        print(f"\n{'='*70}")
+        print(f"Creating dataset with diagonal imputation strategy: {strategy}")
+        print(f"{'='*70}")
+        
         X_list, y_list, subject_list = [], [], []
 
         for i in range(df.shape[0]):
             subject_id = df.iloc[i, 0]
             connectivity_values = df.iloc[i, 1:].to_numpy(dtype=float)
             
-            # Step 1: reconstruct matrix
+            # Step 1: Reconstruct matrix
             matrix = self.reconstruct_matrix(connectivity_values, connection_columns)
             
-            # Step 2: Impute diagonal
-            matrix = impute_connectivity_diagonal(matrix)
+            # Step 2: Enhanced diagonal imputation with region information
+            # This enables network-aware and spatial strategies
+            matrix = impute_connectivity_diagonal(
+                matrix,
+                region_list=self.region_list,  # KEY: Pass region names
+                strategy=None,  # Use config default
+                config_path="config.yaml"
+            )
             
-            # Step 3: flatten rows for each region
+            # Step 3: Flatten rows for each region
             for region_idx in range(self.n_regions):
                 X_list.append(matrix[region_idx, :])
                 y_list.append(region_idx)
@@ -130,8 +161,10 @@ class ConnectivityProcessor:
         y = np.array(y_list)
         subjects = np.array(subject_list)
 
-        print(f"Created dataset with {X.shape[0]} samples ({df.shape[0]} subjects × {self.n_regions} regions)")
-        print(f"Diagonal strategy used: {diagonal_strategy}")
+        print(f"\n✓ Created dataset with {X.shape[0]} samples ({df.shape[0]} subjects × {self.n_regions} regions)")
+        print(f"✓ Diagonal imputation strategy used: {strategy}")
+        print(f"{'='*70}\n")
+        
         return X, y, subjects
     
     def save_region_list(self, filepath: str) -> None:
@@ -149,5 +182,58 @@ class ConnectivityProcessor:
         
         pd.DataFrame(connection_columns, columns=["connection_name"]).to_csv(filepath, index=False)
         print(f"Saved {len(connection_columns)} connection columns to {filepath}")
+
+
+# ============================================================
+# UTILITY: Compare diagonal imputation strategies
+# ============================================================
+
+def compare_diagonal_strategies(connectivity_matrix: np.ndarray,
+                               region_list: List[str],
+                               strategies: List[str] = None) -> Dict[str, np.ndarray]:
+    """
+    Compare different diagonal imputation strategies on the same matrix.
+    
+    Args:
+        connectivity_matrix: Input connectivity matrix
+        region_list: List of region names
+        strategies: List of strategy names to compare
         
-        
+    Returns:
+        Dictionary mapping strategy name to imputed matrix
+    """
+    if strategies is None:
+        strategies = ['zero', 'one', 'mean', 'knn', 'network_mean', 'spatial_mean', 'hybrid']
+    
+    results = {}
+    
+    print("\n" + "="*70)
+    print("COMPARING DIAGONAL IMPUTATION STRATEGIES")
+    print("="*70)
+    
+    for strategy in strategies:
+        print(f"\nTesting strategy: {strategy}")
+        try:
+            imputed = impute_connectivity_diagonal(
+                connectivity_matrix.copy(),
+                region_list=region_list,
+                strategy=strategy
+            )
+            results[strategy] = imputed
+            
+            # Quick stats
+            diagonal_values = np.diag(imputed)
+            print(f"  Diagonal mean: {diagonal_values.mean():.4f}")
+            print(f"  Diagonal std:  {diagonal_values.std():.4f}")
+            print(f"  Diagonal min:  {diagonal_values.min():.4f}")
+            print(f"  Diagonal max:  {diagonal_values.max():.4f}")
+            
+        except Exception as e:
+            print(f"  ⚠ Error: {e}")
+            results[strategy] = None
+    
+    print("\n" + "="*70)
+    print("COMPARISON COMPLETE")
+    print("="*70 + "\n")
+    
+    return results
